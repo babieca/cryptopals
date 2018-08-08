@@ -23,9 +23,8 @@ Achievement Unlocked
 '''
 import string
 
-from lib.hexxor import hexxor
-from lib.freqchars import freqchars
-#from lib.printjson import printJSON
+from libcrypt.hexxor import hexxor
+from libcrypt.freqchars import freqchars
 
 def is_hex(s):
     hex_digits = set(string.hexdigits)
