@@ -4,33 +4,57 @@
 import string      # definitions of ascii printable chars
 import requests
 import os
+import codecs
 import binascii
 import base64
 from libcrypt.common import wfile
 
 
-def hexToBase64(s):
-
+def hex2Base64(s):
     decoded = binascii.unhexlify(s)
     encoded = base64.b64encode(decoded).decode('ascii')
     return encoded
 
-def to_bytes(n, length, endianess='big'):
+def toBytes(n, length=8, endianess='big'):
     h = '%x' % n
     s = ('0'*(len(h) % 2) + h).zfill(length*2).decode('hex')
     return s if endianess == 'big' else s[::-1]
 
-''' this is guaranteed to work with UTF-8 encoding
-    (because all bytes in multi-byte characters have
-    the highest bit set to 1).
-''' 
 def removeNonAscii(s):
     return "".join(i for i in s if ord(i)<128)
 
-def char2hex(c):
-    return "{:02x}".format((ord(c)))
+def char2Hex(s):
+    s = removeNonAscii(s)
+    return "{:02x}".format((ord(s)))
 
-def is_hex(s):
+def str2Hex(s):
+    '''
+        Convert char string to hexadecimal
+        
+        Parameters:
+            s : 1 byte char (ASCII char)
+        Returns:
+            2 bytes in hexadecimal represenation (00 .. ff)
+    '''
+    onlyascii = removeNonAscii(s)
+    return ''.join(list(map(hex,map(ord, onlyascii))))
+
+def str2Bits(s):
+    s = removeNonAscii(s)
+    return ''.join('{0:08b}'.format(ord(x), 'b') for x in s)
+    #' '.join('{0:08b}'.format(x, 'b') for x in bytearray(b"ABCD"))     # with bytearray
+
+def hex2Str(h):
+    return codecs.decode(h, "hex").decode('utf-8')
+
+def hex2Bits(h):    
+    num_of_bits = 8
+    bin(int(h, 16))[2:].zfill(num_of_bits)
+
+def bits2Hex(bstr):
+    return '{:02X}'.format(int(bstr, 2))
+
+def isHex(s):
     hex_digits = set(string.hexdigits)
     # if s is long, then it is faster to check against a set
     return all(c in hex_digits for c in s)
