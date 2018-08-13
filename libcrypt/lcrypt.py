@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+
+''' Library to convert between types: 
+        Hex <--> Bits <--> Oct <--> Int <--> Base64 <-->  Str
+    Remove Non Ascii characters
+    Check if it is hexadecimal
+'''
+
+
 import string      # definitions of ascii printable chars
 import requests
 import os
@@ -9,11 +17,6 @@ import binascii
 import base64
 from libcrypt.common import wfile
 
-
-def hex2Base64(s):
-    decoded = binascii.unhexlify(s)
-    encoded = base64.b64encode(decoded).decode('ascii')
-    return encoded
 
 def toBytes(n, length=8, endianess='big'):
     h = '%x' % n
@@ -27,6 +30,142 @@ def char2Hex(s):
     s = removeNonAscii(s)
     return "{:02x}".format((ord(s)))
 
+def isHex(s):
+    hex_digits = set(string.hexdigits)
+    # if s is long, then it is faster to check against a set
+    return all(c in hex_digits for c in s)
+
+
+
+''' Hexadecimal to:
+        Bits
+        Octal
+        Integer
+        Base64
+        String
+'''
+def hex2Bits(h):
+    if isinstance(h, int): h = str(h)         
+    num_of_bits = 8
+    if isHex(h):
+        return bin(int(h, 16))[2:].zfill(num_of_bits)
+    else:
+        raise ValueError('You must specify an hex value')
+def hex2Oct(h):
+    if isinstance(h, int): h = str(h)
+    if isHex(h):
+        return oct(int(h,16))
+    else:
+        raise ValueError('You must specify an hex value')
+def hex2Int(h):
+    if isinstance(h, int): h = str(h)
+    if isHex(h):
+        return int(h,16)
+    else:
+        raise ValueError('You must specify an hex value')
+def hex2Base64(h):
+    if isinstance(h, int): h = str(h)
+    if isHex(h):
+        decoded = binascii.unhexlify(h)
+        encoded = base64.b64encode(decoded).decode('ascii')
+        return encoded
+    else:
+        raise ValueError('You must specify an hex value')
+def hex2Str(h):
+    if isinstance(h, int): h = str(h)
+    if isHex(h):
+        return codecs.decode(h, "hex").decode('utf-8')
+    else:
+        raise ValueError('You must specify an hex value')
+
+
+
+''' bits to:
+        Octal
+        Integer
+        Base64
+        String
+        Hexadecimal
+'''
+def bits2Oct():
+    pass
+def bits2Int():
+    pass
+def bits2Base64():
+    pass
+def bits2Str():
+    pass
+def bits2Hex(bstr):
+    return '{:02X}'.format(int(bstr, 2))
+
+
+
+''' Octal to:
+        Bits
+        Integer
+        Base64
+        String
+        Hexadecimal
+'''
+def oct2Int():
+    pass
+def oct2Base64():
+    pass
+def oct2Str():
+    pass
+def oct2Hex():
+    pass
+def oct2Bits():
+    pass
+
+
+''' Integer to:
+        Bits
+        Octal
+        Base64
+        String
+        Hexadecimal
+'''
+def int2Base64():
+    pass
+def int2Str():
+    pass
+def int2Hex():
+    pass
+def int2Bits():
+    pass
+def int2Oct():
+    pass
+
+
+
+''' Base64 to:
+        Bits
+        Octal
+        Integer
+        String
+        Hexadecimal
+'''
+def base642Str():
+    pass
+def base642Hex():
+    pass
+def base642Bits():
+    pass
+def base642Oct():
+    pass
+def base642Int():
+    pass
+
+
+
+''' String to:
+        Bits
+        Octal
+        Integer
+        Base64
+        Hexadecimal
+'''
 def str2Hex(s):
     '''
         Convert char string to hexadecimal
@@ -38,26 +177,20 @@ def str2Hex(s):
     '''
     onlyascii = removeNonAscii(s)
     return ''.join(list(map(hex,map(ord, onlyascii))))
-
 def str2Bits(s):
     s = removeNonAscii(s)
     return ''.join('{0:08b}'.format(ord(x), 'b') for x in s)
     #' '.join('{0:08b}'.format(x, 'b') for x in bytearray(b"ABCD"))     # with bytearray
+def str2Oct():
+    pass
+def str2Int():
+    pass
+def str2Base64():
+    pass
 
-def hex2Str(h):
-    return codecs.decode(h, "hex").decode('utf-8')
 
-def hex2Bits(h):    
-    num_of_bits = 8
-    bin(int(h, 16))[2:].zfill(num_of_bits)
 
-def bits2Hex(bstr):
-    return '{:02X}'.format(int(bstr, 2))
 
-def isHex(s):
-    hex_digits = set(string.hexdigits)
-    # if s is long, then it is faster to check against a set
-    return all(c in hex_digits for c in s)
 
 def freqchars():
     # define text - from url
