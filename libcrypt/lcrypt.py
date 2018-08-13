@@ -6,6 +6,27 @@
         Hex <--> Bits <--> Oct <--> Int <--> Base64 <-->  Str
     Remove Non Ascii characters
     Check if it is hexadecimal
+    
+    Format (https://docs.python.org/3.2/library/string.html):
+        format_spec ::=  [[fill]align][sign][#][0][width][,][.precision][type]
+            fill        ::=  <a character other than '{' or '}'>
+            align       ::=  "<" | ">" | "=" | "^"
+            sign        ::=  "+" | "-" | " "
+            width       ::=  integer
+            precision   ::=  integer
+            type        ::=  "b" | "c" | "d" | "e" | "E" | "f" | "F" | "g" | "G" | "n" | "o" | "s" | "x" | "X" | "%"
+                Strings:
+                    's'     String format. This is the default type for strings and may be omitted.
+                    None     The same as 's'.
+                Integers:
+                    'b'     Binary format. Outputs the number in base 2.
+                    'c'     Character. Converts the integer to the corresponding unicode character before printing.
+                    'd'     Decimal Integer. Outputs the number in base 10.
+                    'o'     Octal format. Outputs the number in base 8.
+                    'x'     Hex format. Outputs the number in base 16, using lower- case letters for the digits above 9.
+                    'X'     Hex format. Outputs the number in base 16, using upper- case letters for the digits above 9.
+                    'n'     Number. This is the same as 'd', except that it uses the current locale setting to insert the appropriate number separator characters.
+                    None     The same as 'd'.
 '''
 
 
@@ -126,16 +147,32 @@ def oct2Bits():
         String
         Hexadecimal
 '''
-def int2Base64():
-    pass
-def int2Str():
-    pass
-def int2Hex():
-    pass
-def int2Bits():
-    pass
-def int2Oct():
-    pass
+def int2Base64(i):
+    if isinstance(i, int):
+        return base64.b64encode(bytes(i))                   # encodes the 1-byte integer
+        # return base64.b64encode(bytes(str(i), 'ascii'))   # encodes the 1-byte character string
+    else:
+        raise ValueError('You must specify an int value')
+def int2Str(i):
+    if isinstance(i, int):
+        return '{0:01d}'.format(i)
+    else:
+        raise ValueError('You must specify an int value')
+def int2Hex(i):
+    if isinstance(i, int):
+        return '{:#04x}'.format(i)
+    else:
+        raise ValueError('You must specify an int value')
+def int2Bits(i):
+    if isinstance(i, int):
+        return '{:#10b}'.format(i)
+    else:
+        raise ValueError('You must specify an int value')
+def int2Oct(i):
+    if isinstance(i, int):
+        return '{:#05o}'.format(i)
+    else:
+        raise ValueError('You must specify an int value')
 
 
 
@@ -178,15 +215,23 @@ def str2Hex(s):
     onlyascii = removeNonAscii(s)
     return ''.join(list(map(hex,map(ord, onlyascii))))
 def str2Bits(s):
-    s = removeNonAscii(s)
-    return ''.join('{0:08b}'.format(ord(x), 'b') for x in s)
-    #' '.join('{0:08b}'.format(x, 'b') for x in bytearray(b"ABCD"))     # with bytearray
+    if isinstance(s, str):
+        s = removeNonAscii(s)
+        return ''.join('{0:#010b}'.format(ord(x), 'b') for x in s)
+        #' '.join('{0:08b}'.format(x, 'b') for x in bytearray(b"ABCD"))     # with bytearray
+    else:
+        raise ValueError('You must specify a string')
 def str2Oct():
     pass
 def str2Int():
     pass
-def str2Base64():
-    pass
+def str2Base64(s):
+    if isinstance(s, str):
+        s = removeNonAscii(s)
+        return base64.b64encode(s.encode('ascii'))
+    else:
+        raise ValueError('You must specify a string')
+    
 
 
 
