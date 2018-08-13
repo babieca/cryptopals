@@ -50,19 +50,19 @@ def hex2Bits(h):
     if isHex(h):
         return bin(int(h, 16))[2:].zfill(num_of_bits)
     else:
-        raise ValueError('You must specify an hex value')
+        raise ValueError('You must specify a hex value')
 def hex2Oct(h):
     if isinstance(h, int): h = str(h)
     if isHex(h):
         return oct(int(h,16))
     else:
-        raise ValueError('You must specify an hex value')
+        raise ValueError('You must specify a hex value')
 def hex2Int(h):
     if isinstance(h, int): h = str(h)
     if isHex(h):
         return int(h,16)
     else:
-        raise ValueError('You must specify an hex value')
+        raise ValueError('You must specify a hex value')
 def hex2Base64(h):
     if isinstance(h, int): h = str(h)
     if isHex(h):
@@ -70,13 +70,13 @@ def hex2Base64(h):
         encoded = base64.b64encode(decoded).decode('ascii')
         return encoded
     else:
-        raise ValueError('You must specify an hex value')
+        raise ValueError('You must specify a hex value')
 def hex2Str(h):
     if isinstance(h, int): h = str(h)
     if isHex(h):
         return codecs.decode(h, "hex").decode('utf-8')
     else:
-        raise ValueError('You must specify an hex value')
+        raise ValueError('You must specify a hex value')
 
 
 
