@@ -36,6 +36,7 @@ import os
 import codecs
 import binascii
 import base64
+import re
 from libcrypt.common import wfile
 
 
@@ -56,6 +57,24 @@ def isHex(s):
     # if s is long, then it is faster to check against a set
     return all(c in hex_digits for c in s)
 
+def isBitStr(bstr):
+    if isinstance(bstr, str):
+        return bool(re.match('^(0b)?[0,1]+$', bstr))
+    else:
+        raise ValueError('You must specify a string')
+
+def text_to_bits(text, encoding='utf-8', errors='surrogatepass'):
+    bits = bin(int(binascii.hexlify(text.encode(encoding, errors)), 16))[2:]
+    return bits.zfill(8 * ((len(bits) + 7) // 8))
+
+def text_from_bits(bits, encoding='utf-8', errors='surrogatepass'):
+    n = int(bits, 2)
+    return int2bytes(n).decode(encoding, errors)
+
+def int2bytes(i):
+    hex_string = '%x' % i
+    n = len(hex_string)
+    return binascii.unhexlify(hex_string.zfill(n + (n & 1)))
 
 
 ''' Hexadecimal to:
@@ -108,16 +127,28 @@ def hex2Str(h):
         String
         Hexadecimal
 '''
-def bits2Oct():
+def bits2Oct(bstr):
+    if isBitStr(bstr):
+        return '{:#02o}'.format(int(bstr, 2))
+    else:
+        raise ValueError('You must specify a string of bits')
+def bits2Int(bstr):
+    if isBitStr(bstr):
+        return int(bstr, 2)
+    else:
+        raise ValueError('You must specify a string of bits')
+def bits2Base64(bstr):
     pass
-def bits2Int():
-    pass
-def bits2Base64():
-    pass
-def bits2Str():
-    pass
+def bits2Str(bstr):
+    if isBitStr(bstr):
+        return text_from_bits(bstr)
+    else:
+        raise ValueError('You must specify a string of bits')    
 def bits2Hex(bstr):
-    return '{:02X}'.format(int(bstr, 2))
+    if isBitStr(bstr):
+        return '{:#02X}'.format(int(bstr, 2))
+    else:
+        raise ValueError('You must specify a string of bits')
 
 
 
