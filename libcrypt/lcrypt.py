@@ -3,7 +3,7 @@
 
 
 ''' Library to convert between types: 
-        Hex <--> Bits <--> Oct <--> Int <--> Base64 <-->  Str
+        Hex <--> Bits <--> Oct <--> Dec <--> Base64 <-->  Str
     Remove Non Ascii characters
     Check if it is hexadecimal
     
@@ -62,14 +62,16 @@ def isBitStr(bstr):
         return bool(re.match('^(0b)?[0,1]+$', bstr))
     else:
         raise ValueError('You must specify a string')
+    
+def isBase64(s):
+    try:
+        return base64.b64encode(base64.b64decode(s)) == s
+    except Exception:
+        return False
 
 def text_to_bits(text, encoding='utf-8', errors='surrogatepass'):
     bits = bin(int(binascii.hexlify(text.encode(encoding, errors)), 16))[2:]
     return bits.zfill(8 * ((len(bits) + 7) // 8))
-
-def text_from_bits(bits, encoding='utf-8', errors='surrogatepass'):
-    n = int(bits, 2)
-    return int2bytes(n).decode(encoding, errors)
 
 def int2bytes(i):
     hex_string = '%x' % i
@@ -80,7 +82,7 @@ def int2bytes(i):
 ''' Hexadecimal to:
         Bits
         Octal
-        Integer
+        Decimal
         Base64
         String
 '''
@@ -97,7 +99,7 @@ def hex2Oct(h):
         return oct(int(h,16))
     else:
         raise ValueError('You must specify a hex value')
-def hex2Int(h):
+def hex2Dec(h):
     if isinstance(h, int): h = str(h)
     if isHex(h):
         return int(h,16)
@@ -122,7 +124,7 @@ def hex2Str(h):
 
 ''' bits to:
         Octal
-        Integer
+        Decimal
         Base64
         String
         Hexadecimal
@@ -132,16 +134,16 @@ def bits2Oct(bstr):
         return '{:#02o}'.format(int(bstr, 2))
     else:
         raise ValueError('You must specify a string of bits')
-def bits2Int(bstr):
+def bits2Dec(bstr):
     if isBitStr(bstr):
         return int(bstr, 2)
     else:
         raise ValueError('You must specify a string of bits')
 def bits2Base64(bstr):
     pass
-def bits2Str(bstr):
+def bits2Str(bstr,encoding='utf-8', errors='surrogatepass'):
     if isBitStr(bstr):
-        return text_from_bits(bstr)
+        return int2bytes(int(bstr, 2)).decode(encoding, errors)
     else:
         raise ValueError('You must specify a string of bits')    
 def bits2Hex(bstr):
@@ -154,52 +156,71 @@ def bits2Hex(bstr):
 
 ''' Octal to:
         Bits
-        Integer
+        Decimal
         Base64
         String
         Hexadecimal
 '''
-def oct2Int():
-    pass
-def oct2Base64():
-    pass
-def oct2Str():
-    pass
-def oct2Hex():
-    pass
-def oct2Bits():
-    pass
+def oct2Dec(o):
+    if isinstance(o, int):
+        return '{:d}'.format(chr(int(str(o),8)))
+    elif isinstance(o, str):
+        return '{:d}'.format(int(o,8))
+    else:
+        raise ValueError('You must specify an octal value')
+def oct2Base64(o):
+    if isinstance(o, int):
+        return '{:d}'.format(int(o,8))
+    else:
+        raise ValueError('You must specify an octal value')
+def oct2Str(o):
+    if isinstance(o, int):
+        return '{}'.format(chr(int(str(o),8)))
+    elif isinstance(o, str):
+        return '{}'.format(chr(int(o,8)))
+    else:
+        raise ValueError('You must specify an octal value')
+def oct2Hex(o):
+    if isinstance(o, int):
+        return '{:#02X}'.format(int(str(o),8))
+    else:
+        raise ValueError('You must specify an octal value')
+def oct2Bits(o):
+    if isinstance(o, int):
+        return '{:#02X}'.format(int(str(o),8))
+    else:
+        raise ValueError('You must specify an octal value')
 
 
-''' Integer to:
+''' Decimal to:
         Bits
         Octal
         Base64
         String
         Hexadecimal
 '''
-def int2Base64(i):
+def dec2Base64(i):
     if isinstance(i, int):
         return base64.b64encode(bytes(i))                   # encodes the 1-byte integer
         # return base64.b64encode(bytes(str(i), 'ascii'))   # encodes the 1-byte character string
     else:
         raise ValueError('You must specify an int value')
-def int2Str(i):
+def dec2Str(i):
     if isinstance(i, int):
         return '{0:01d}'.format(i)
     else:
         raise ValueError('You must specify an int value')
-def int2Hex(i):
+def dec2Hex(i):
     if isinstance(i, int):
         return '{:#04x}'.format(i)
     else:
         raise ValueError('You must specify an int value')
-def int2Bits(i):
+def dec2Bits(i):
     if isinstance(i, int):
         return '{:#10b}'.format(i)
     else:
         raise ValueError('You must specify an int value')
-def int2Oct(i):
+def dec2Oct(i):
     if isinstance(i, int):
         return '{:#05o}'.format(i)
     else:
@@ -210,56 +231,72 @@ def int2Oct(i):
 ''' Base64 to:
         Bits
         Octal
-        Integer
+        Decimal
         String
         Hexadecimal
 '''
-def base642Str():
-    pass
-def base642Hex():
-    pass
-def base642Bits():
-    pass
-def base642Oct():
-    pass
-def base642Int():
-    pass
+def base642Str(b64):
+    if isBase64(b64):
+        return base64.b64decode(b64).decode('utf-8')
+    else:
+        raise ValueError('Incorrect base64 format')
+def base642Hex(b64):
+    if isBase64(b64):
+        s = base64.b64decode(b64).decode('utf-8')
+        return str2Hex(s, 'utf-8', 'surrogatepass')
+    else:
+        raise ValueError('Incorrect base64 format')
+def base642Bits(b64):
+    if isBase64(b64):
+        s = base64.b64decode(b64).decode('utf-8')
+        return str2Bits(s, 'utf-8', 'surrogatepass')
+    else:
+        raise ValueError('Incorrect base64 format')
+def base642Oct(b64):
+    if isBase64(b64):
+        s = base64.b64decode(b64).decode('utf-8')
+        return str2Oct(s, 'utf-8', 'surrogatepass')
+    else:
+        raise ValueError('Incorrect base64 format')
+def base642Dec(b64):
+    if isBase64(b64):
+        s = base64.b64decode(b64).decode('utf-8')
+        return str2Dec(s, 'utf-8', 'surrogatepass')
+    else:
+        raise ValueError('Incorrect base64 format')
 
 
 
 ''' String to:
         Bits
         Octal
-        Integer
+        Decimal
         Base64
         Hexadecimal
 '''
-def str2Hex(s):
-    '''
-        Convert char string to hexadecimal
-        
-        Parameters:
-            s : 1 byte char (ASCII char)
-        Returns:
-            2 bytes in hexadecimal represenation (00 .. ff)
-    '''
-    onlyascii = removeNonAscii(s)
-    return ''.join(list(map(hex,map(ord, onlyascii))))
-def str2Bits(s):
+def str2Hex(s, encoding='utf-8', errors='surrogatepass'):
     if isinstance(s, str):
-        s = removeNonAscii(s)
-        return ''.join('{0:#010b}'.format(ord(x), 'b') for x in s)
-        #' '.join('{0:08b}'.format(x, 'b') for x in bytearray(b"ABCD"))     # with bytearray
+        return ['{0:#04x}'.format(x, 'b') for x in bytearray(s.encode(encoding, errors))]
     else:
         raise ValueError('You must specify a string')
-def str2Oct():
-    pass
-def str2Int():
-    pass
-def str2Base64(s):
+def str2Bits(s, encoding='utf-8', errors='surrogatepass'):
     if isinstance(s, str):
-        s = removeNonAscii(s)
-        return base64.b64encode(s.encode('ascii'))
+        return ['{0:#010b}'.format(x, 'b') for x in bytearray(s.encode(encoding, errors))]
+    else:
+        raise ValueError('You must specify a string')
+def str2Oct(s, encoding='utf-8', errors='surrogatepass'):
+    if isinstance(s, str):
+        return ['{0:#04o}'.format(x, 'b') for x in bytearray(s.encode(encoding, errors))]
+    else:
+        raise ValueError('You must specify a string')
+def str2Dec(s, encoding='utf-8', errors='surrogatepass'):
+    if isinstance(s, str):
+        return ['{0:d}'.format(x, 'b') for x in bytearray(s.encode(encoding, errors))]
+    else:
+        raise ValueError('You must specify a string')
+def str2Base64(s, encoding='utf-8', errors='surrogatepass'):
+    if isinstance(s, str):
+        return base64.b64encode(s.encode(encoding, errors))
     else:
         raise ValueError('You must specify a string')
     
