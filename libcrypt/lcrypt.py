@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 ''' Library to convert between types: 
         Hex <--> Bits <--> Oct <--> Dec <--> Base64 <-->  Str
     Remove Non Ascii characters
@@ -29,37 +28,78 @@
                     None     The same as 'd'.
 '''
 
-
-import string      # definitions of ascii printable chars
-import requests
-import os
 import codecs
 import binascii
 import base64
 import re
-from libcrypt.common import wfile
+
+''' Global variables '''
+
+# Frequencies of English letters in hexadecimal
+FREQ_ENG = {"0x20": 0.16803388484629145,    "0x45": 0.09467692662363238,    "0x65": 0.09467692662363238,    \
+            "0x54": 0.06863717380164468,    "0x74": 0.06863717380164468,    "0x41": 0.05966659937195416,    \
+            "0x61": 0.05966659937195416,    "0x4f": 0.05720860388206428,    "0x6f": 0.05720860388206428,    \
+            "0x4e": 0.051667419055882034,   "0x6e": 0.051667419055882034,   "0x49": 0.05145866900917404,    \
+            "0x69": 0.05145866900917404,    "0x53": 0.049077518887522015,   "0x73": 0.049077518887522015,   \
+            "0x48": 0.04895168789795041,    "0x68": 0.04895168789795041,    "0x52": 0.04491096830313412,    \
+            "0x72": 0.04491096830313412,    "0x0a": 0.03863130212892039,    "0x44": 0.03364810446111129,    \
+            "0x64": 0.03364810446111129,    "0x4c": 0.031059392623187944,   "0x6c": 0.031059392623187944,   \
+            "0x55": 0.022346685898254354,   "0x75": 0.022346685898254354,   "0x4d": 0.01932159271664353,    \
+            "0x6d": 0.01932159271664353,    "0x43": 0.018355612108347744,   "0x63": 0.018355612108347744,   \
+            "0x57": 0.018074770015148574,   "0x77": 0.018074770015148574,   "0x46": 0.016916940059688516,   \
+            "0x66": 0.016916940059688516,   "0x47": 0.016001265439878336,   "0x67": 0.016001265439878336,   \
+            "0x59": 0.015058391256739979,   "0x79": 0.015058391256739979,   "0x2c": 0.014622009913052503,   \
+            "0x50": 0.01288176600691001,    "0x70": 0.01288176600691001,    "0x42": 0.011659634171154705,   \
+            "0x62": 0.011659634171154705,   "0x2e": 0.007863842683007178,   "0x56": 0.007199301895479472,   \
+            "0x76": 0.007199301895479472,   "0x4b": 0.006004369623052343,   "0x6b": 0.006004369623052343,   \
+            "0x2d": 0.0025372175190010735,  "0x3b": 0.002001544565494238,   "0x27": 0.001829764799038139,   \
+            "0x22": 0.0013428133934346856,  "0x4a": 0.001172882140991181,   "0x6a": 0.001172882140991181,   \
+            "0x58": 0.0011418535129226314,  "0x78": 0.0011418535129226314,  "0x21": 0.0009601709928276336,  \
+            "0x51": 0.0008552018042553057,  "0x71": 0.0008552018042553057,  "0x5f": 0.0008285303877878714,  \
+            "0x3f": 0.0006667854116858567,  "0x3a": 0.000617139606776177,   "0x5a": 0.0005244498327160837,  \
+            "0x7a": 0.0005244498327160837,  "0x29": 0.00022499056267578213, "0x28": 0.00022433037909985553, \
+            "0x31": 0.00020993837714465587, "0x2a": 0.00015580332391867542, "0x32": 0.00011223120790752043, \
+            "0x30": 9.691494894602353e-05,  "0x33": 7.328037692785158e-05,  "0x38": 6.98474223330333e-05,   \
+            "0x35": 6.549021073191781e-05,  "0x34": 6.245336628265549e-05,  "0x36": 5.6115603953760213e-05, \
+            "0x37": 5.571949380820426e-05,  "0x39": 5.373894308042449e-05,  "0x2f": 3.525380295447995e-05,  \
+            "0x5b": 1.5316258961496907e-05, "0x7e": 1.5052185531126269e-05, "0x5d": 1.4656075385570314e-05, \
+            "0x26": 1.0959047360381407e-05, "0x7d": 9.37460677815759e-06,   "0x7b": 9.110533347786953e-06,  \
+            "0x7c": 4.753321746671454e-06,  "0x24": 3.1688811644476354e-06, "0x40": 2.508697588521045e-06,  \
+            "0x23": 1.3203671518531816e-06, "0x25": 1.3203671518531816e-06, "0x2b": 1.1883304366678635e-06, \
+            "0x3d": 1.1883304366678635e-06, "0x3e": 1.1883304366678635e-06,                                 \
+            "0x00": 0.0,"0x01": 0.0,"0x02": 0.0,"0x03": 0.0,"0x04": 0.0,"0x05": 0.0,"0x06": 0.0,"0x07": 0.0,\
+            "0x08": 0.0,"0x09": 0.0,"0x0b": 0.0,"0x0c": 0.0,"0x0d": 0.0,"0x0e": 0.0,"0x0f": 0.0,"0x10": 0.0,\
+            "0x11": 0.0,"0x12": 0.0,"0x13": 0.0,"0x14": 0.0,"0x15": 0.0,"0x16": 0.0,"0x17": 0.0,"0x18": 0.0,\
+            "0x19": 0.0,"0x1a": 0.0,"0x1b": 0.0,"0x1c": 0.0,"0x1d": 0.0,"0x1e": 0.0,"0x1f": 0.0,"0x3c": 0.0,\
+            "0x5c": 0.0,"0x5e": 0.0,"0x60": 0.0,"0x7f": 0.0}
 
 
-def toBytes(n, length=8, endianess='big'):
-    h = '%x' % n
-    s = ('0'*(len(h) % 2) + h).zfill(length*2).decode('hex')
-    return s if endianess == 'big' else s[::-1]
+''' Generic functions '''
 
 def removeNonAscii(s):
     return "".join(i for i in s if ord(i)<128)
 
-def char2Hex(s):
-    s = removeNonAscii(s)
-    return "{:02x}".format((ord(s)))
+def isHex(data):
+    if isinstance(data, str):
+        return bool(re.match('^(0[xX])?[0-9a-fA-F]+$', data))
+    elif isinstance(data, int):
+        return bool(re.match('^(0[xX])?[0-9a-fA-F]+$', "{:#x}".format(data)))
+    else:
+        raise ValueError('You must specify a string')
 
-def isHex(s):
-    hex_digits = set(string.hexdigits)
-    # if s is long, then it is faster to check against a set
-    return all(c in hex_digits for c in s)
+def isOct(data):
+    if isinstance(data, str):
+        return bool(re.match('^(0o)?[0-7]+$', data))
+    elif isinstance(data, int):
+        return bool(re.match('^(0o)?[0-7]+$', "{:#o}".format(data)))
+    else:
+        raise ValueError('You must specify a string')
 
-def isBitStr(bstr):
-    if isinstance(bstr, str):
-        return bool(re.match('^(0b)?[0,1]+$', bstr))
+def isBits(data):
+    if isinstance(data, str):
+        return bool(re.match('^(0b)?[0,1]+$', data))
+    elif isinstance(data, int):
+        return bool(re.match('^(0b)?[0,1]+$', "{:#b}".format(data)))
     else:
         raise ValueError('You must specify a string')
     
@@ -68,10 +108,6 @@ def isBase64(s):
         return base64.b64encode(base64.b64decode(s)) == s
     except Exception:
         return False
-
-def text_to_bits(text, encoding='utf-8', errors='surrogatepass'):
-    bits = bin(int(binascii.hexlify(text.encode(encoding, errors)), 16))[2:]
-    return bits.zfill(8 * ((len(bits) + 7) // 8))
 
 def int2bytes(i):
     hex_string = '%x' % i
@@ -130,25 +166,28 @@ def hex2Str(h):
         Hexadecimal
 '''
 def bits2Oct(bstr):
-    if isBitStr(bstr):
+    if isBits(bstr):
         return '{:#02o}'.format(int(bstr, 2))
     else:
         raise ValueError('You must specify a string of bits')
 def bits2Dec(bstr):
-    if isBitStr(bstr):
+    if isBits(bstr):
         return int(bstr, 2)
     else:
         raise ValueError('You must specify a string of bits')
 def bits2Base64(bstr):
-    pass
+    if isBits(bstr):
+        return base64.b64encode(int2bytes(int(bstr, 2)))
+    else:
+        raise ValueError('You must specify a string of bits')
 def bits2Str(bstr,encoding='utf-8', errors='surrogatepass'):
-    if isBitStr(bstr):
+    if isBits(bstr):
         return int2bytes(int(bstr, 2)).decode(encoding, errors)
     else:
         raise ValueError('You must specify a string of bits')    
 def bits2Hex(bstr):
-    if isBitStr(bstr):
-        return '{:#02X}'.format(int(bstr, 2))
+    if isBits(bstr):
+        return '{:#02x}'.format(int(bstr, 2))
     else:
         raise ValueError('You must specify a string of bits')
 
@@ -170,7 +209,7 @@ def oct2Dec(o):
         raise ValueError('You must specify an octal value')
 def oct2Base64(o):
     if isinstance(o, int):
-        return '{:d}'.format(int(o,8))
+        return base64.b64encode(int2bytes(int(o, 8)))
     else:
         raise ValueError('You must specify an octal value')
 def oct2Str(o):
@@ -182,7 +221,7 @@ def oct2Str(o):
         raise ValueError('You must specify an octal value')
 def oct2Hex(o):
     if isinstance(o, int):
-        return '{:#02X}'.format(int(str(o),8))
+        return '{:#02x}'.format(int(str(o),8))
     else:
         raise ValueError('You must specify an octal value')
 def oct2Bits(o):
@@ -199,32 +238,42 @@ def oct2Bits(o):
         String
         Hexadecimal
 '''
-def dec2Base64(i):
-    if isinstance(i, int):
-        return base64.b64encode(bytes(i))                   # encodes the 1-byte integer
-        # return base64.b64encode(bytes(str(i), 'ascii'))   # encodes the 1-byte character string
+def dec2Base64(data):
+    if isinstance(data, int):
+        return base64.b64encode(bytes(data))                   # encodes the 1-byte integer
+        # return base64.b64encode(bytes(str(i), 'ascii'))      # encodes the 1-byte character string
+    elif isinstance(data, str):
+        return base64.b64encode(bytes(int(data)))
     else:
-        raise ValueError('You must specify an int value')
-def dec2Str(i):
-    if isinstance(i, int):
-        return '{0:01d}'.format(i)
+        raise ValueError('You must specify a deciaml value')
+def dec2Str(data):
+    if isinstance(data, int):
+        return '{:}'.format(chr(int(str(data))))
+    elif isinstance(data, str):
+        return '{:}'.format(chr(int(data)))
     else:
-        raise ValueError('You must specify an int value')
-def dec2Hex(i):
-    if isinstance(i, int):
-        return '{:#04x}'.format(i)
+        raise ValueError('You must specify a decimal value')
+def dec2Hex(data):
+    if isinstance(data, int):
+        return '{:#04x}'.format(data)
+    elif isinstance(data, str):
+        return '{:#04x}'.format(int(data))
     else:
-        raise ValueError('You must specify an int value')
-def dec2Bits(i):
-    if isinstance(i, int):
-        return '{:#10b}'.format(i)
+        raise ValueError('You must specify a decimal value')
+def dec2Bits(data):
+    if isinstance(data, int):
+        return '{:#10b}'.format(data)
+    elif isinstance(data, str):
+        return '{:#10b}'.format(int(data))
     else:
-        raise ValueError('You must specify an int value')
-def dec2Oct(i):
-    if isinstance(i, int):
-        return '{:#05o}'.format(i)
+        raise ValueError('You must specify a decimal value')
+def dec2Oct(data):
+    if isinstance(data, int):
+        return '{:#05o}'.format(data)
+    elif isinstance(data, str):
+        return '{:#05o}'.format(int(data))
     else:
-        raise ValueError('You must specify an int value')
+        raise ValueError('You must specify a decimal value')
 
 
 
@@ -276,22 +325,22 @@ def base642Dec(b64):
 '''
 def str2Hex(s, encoding='utf-8', errors='surrogatepass'):
     if isinstance(s, str):
-        return ['{0:#04x}'.format(x, 'b') for x in bytearray(s.encode(encoding, errors))]
+        return ''.join('{0:#04x}'.format(x, 'b') for x in bytearray(s.encode(encoding, errors)))
     else:
         raise ValueError('You must specify a string')
 def str2Bits(s, encoding='utf-8', errors='surrogatepass'):
     if isinstance(s, str):
-        return ['{0:#010b}'.format(x, 'b') for x in bytearray(s.encode(encoding, errors))]
+        return ''.join('{0:#010b}'.format(x, 'b') for x in bytearray(s.encode(encoding, errors)))
     else:
         raise ValueError('You must specify a string')
 def str2Oct(s, encoding='utf-8', errors='surrogatepass'):
     if isinstance(s, str):
-        return ['{0:#04o}'.format(x, 'b') for x in bytearray(s.encode(encoding, errors))]
+        return ''.join('{0:#04o}'.format(x, 'b') for x in bytearray(s.encode(encoding, errors)))
     else:
         raise ValueError('You must specify a string')
 def str2Dec(s, encoding='utf-8', errors='surrogatepass'):
     if isinstance(s, str):
-        return ['{0:d}'.format(x, 'b') for x in bytearray(s.encode(encoding, errors))]
+        return ','.join('{0:0d}'.format(x) for x in s.encode(encoding, errors)) 
     else:
         raise ValueError('You must specify a string')
 def str2Base64(s, encoding='utf-8', errors='surrogatepass'):
@@ -300,59 +349,6 @@ def str2Base64(s, encoding='utf-8', errors='surrogatepass'):
     else:
         raise ValueError('You must specify a string')
     
-
-
-
-
-
-def freqchars():
-    # define text - from url
-    top10_books = {
-        'https://www.gutenberg.org/files/1342/1342-0.txt', # Pride and Prejudice, by Jane Austen
-        'https://www.gutenberg.org/files/11/11-0.txt', # Alice�s Adventures in Wonderland, by Lewis Carroll
-        'https://www.gutenberg.org/files/2701/2701-0.txt', # Moby Dick; or The Whale, by Herman Melville
-        'https://www.gutenberg.org/files/30254/30254-0.txt', # The Romance of Lust, by Anonymous
-        'http://www.gutenberg.org/cache/epub/1661/pg1661.txt', # The Adventures of Sherlock Holmes, by Arthur Conan Doyle
-        'https://www.gutenberg.org/files/74/74-0.txt', # The Adventures of Tom Sawyer, Complete by
-        'http://www.gutenberg.org/cache/epub/345/pg345.txt', # Dracula, by Bram Stoker
-        'https://www.gutenberg.org/files/98/98-0.txt', # A Tale of Two Cities, by Charles Dickens
-        'https://www.gutenberg.org/files/57594/57594-0.txt', # The Western Echo, by George W. Romspert
-        'http://www.gutenberg.org/cache/epub/6130/pg6130.txt', # The Iliad of Homer by Homer
-        }
-    
-    text = ''
-    
-    fname = 'C:\\Users\\Laptop2\\Desktop\\tmp\\books.txt'
-
-    asciihex = dict(("{:02x}".format(el),0) for el in range(0,128))
-    
-    if not os.path.isfile(fname) or os.stat(fname).st_size == 0:
-     
-        for url in top10_books:
-            text += requests.get(url).text.strip()
-            
-        text = removeNonAscii(text)
-        wfile(fname, text)
-    else:
-        with open(fname, 'r', encoding='ascii', errors='ignore') as books:
-            text=books.read()
-    
-    for c in text.lower():              # loop over each character
-        if ord(c) < 128:   # Only ASCII code
-            asciihex[char2hex(c)] += 1   # Add 1 to the dictionary
-    
-    total = sum(asciihex.values(), 0.0)
-    freqdic = {k: v / total for k, v in asciihex.items()}
-    
-    for c in string.ascii_lowercase:
-        freqdic[char2hex(c.upper())] = freqdic[char2hex(c)]
-    
-    # sort descending
-    freqdic = dict(sorted(freqdic.items(), key=lambda kv: kv[1], reverse=True))
-    
-    #printJSON(freqdic)    # print all frequencies
-    
-    return freqdic
 
 
 def hexxor(x_hex, y_hex, endinness='big'):
@@ -369,26 +365,20 @@ def hexxor(x_hex, y_hex, endinness='big'):
                 import sys
                 endiness = sys.byteorder  # <-- 'little' or 'big'
     '''
-    if not is_hex(x_hex):
-        if isinstance(x_hex, int):
-            x_hex = str(x_hex)
-        else:
-            print("Error: X must be hex")
-            return -1
-    if not is_hex(y_hex):
-        if isinstance(y_hex, int):
-            y_hex = str(y_hex)
-        else:
-            print("Error: Y must be hex")
-            return -1
+    if not isHex(x_hex):
+        print("Error: X must be hex")
+        return -1
+    if not isHex(y_hex):
+        print("Error: Y must be hex")
+        return -1
     
     if len(x_hex) < len(y_hex):
-        print("error, len(x) < len(y). Cutting len(y) to match len(x)")
+        print("Warning, len(x) < len(y). Cutting len(y) to match len(x)")
         y_hex = y_hex[:len(x_hex)]
     elif len(x_hex) > len(y_hex):
         print("error, len(x) > len(y)")
         return
-          
+    
     x_bytes = binascii.unhexlify(x_hex)
     y_bytes = binascii.unhexlify(y_hex)
     

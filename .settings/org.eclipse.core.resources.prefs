@@ -3,6 +3,7 @@ encoding//lib/freqchars.py=utf-8
 encoding//lib/hexxor.py=utf-8
 encoding//lib/printjson.py=utf-8
 encoding//libcrypt/common.py=utf-8
+encoding//libcrypt/freqchars.py=utf-8
 encoding//libcrypt/lcrypt.py=utf-8
 encoding//set1/challenge01.py=utf-8
 encoding//set1/challenge02.py=utf-8
