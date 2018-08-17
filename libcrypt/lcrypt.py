@@ -109,10 +109,20 @@ def isBase64(s):
     except Exception:
         return False
 
-def int2bytes(i):
-    hex_string = '%x' % i
-    n = len(hex_string)
-    return binascii.unhexlify(hex_string.zfill(n + (n & 1)))
+def int2bytes (input_int) :
+    if not isinstance(input_int, int):
+        raise ValueError('Inappropriate type: {} for x whereas a int is expected'.format(type(input_int)))
+    if not (input_int >= 0):
+        raise ValueError('oopss... something went wront')
+    if (input_int == 0) : return bytes([0])
+    L1 = []
+    num_bits = input_int.bit_length()
+    while input_int :
+        L1[0:0] = [(input_int & 0xFF)]
+        input_int >>= 8
+    if (num_bits % 8) == 0 :
+        L1[0:0] = [0]
+    return bytes(L1)
 
 
 ''' Hexadecimal to:
@@ -394,3 +404,8 @@ def hexxor(x_hex, y_hex, endinness='big'):
     #print("X^Y(int): {}\nX^Y(bits): {:08b}\nX^Y(hex): {}". format(enc_int, enc_int, hex(enc_int)))
     
     return enc_int.to_bytes(len(x_hex), byteorder=endinness, signed=False)
+
+
+if __name__ == "__main__":
+    # execute only if run as a script
+    pass
